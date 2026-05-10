@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroGuard AI | Final Mission Interface</title>
+    <style>
+        :root {
+            --space-black: #05070a;
+            /* Highly transparent panel for glass effect over images */
+            --panel-bg: rgba(15, 23, 42, 0.6); 
+            --accent-cyan: #22d3ee;
+            --alert-red: #ef4444;
+            --text-muted: #cbd5e1;
+            --relief-gold: #fbbf24;
+        }
+
+        body, html { 
+            margin: 0; padding: 0; 
+            font-family: 'Segoe UI', sans-serif; 
+            height: 100vh; width: 100vw;
+            background-color: var(--space-black);
+            color: white; overflow: hidden;
+        }
+
+        /* --- AUTHENTICATION PAGE (Astronaut Image) --- */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            /* YOUR ASTRONAUT IMAGE */
+            background: url('space.png') no-repeat center center;
+            background-size: cover;
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
+        }
+        /* Dark overlay for readability on login screen */
+        #login-overlay::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); z-index: -1;
+        }
+
+        .login-box {
+            background: var(--panel-bg); padding: 40px; border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2); text-align: center; width: 380px;
+            backdrop-filter: blur(20px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .login-box input {
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; 
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: white;
+            box-sizing: border-box; outline: none; font-size: 1rem;
+        }
+
+        /* --- MAIN DASHBOARD (Nebula Image) --- */
+        #app-interface { 
+            display: none; 
+            height: 100vh; 
+            /* YOUR NEBULA IMAGE */
+            background: url('') no-repeat center center;
+            background-size: cover;
+            position: relative;
+        }
+
+        /* Dark overlay for readability on dashboard */
+        #app-interface::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 7, 12, 0.7); z-index: 0;
+        }
+        
+        .sidebar { 
+            width: 300px; background: rgba(2, 6, 23, 0.85); padding: 25px; 
+            border-right: 1px solid rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; backdrop-filter: blur(15px);
+            position: relative; z-index: 10;
+        }
+
+        .nav-btn {
+            width: 100%; padding: 14px; margin: 5px 0; background: none; border: none;
+            color: var(--text-muted); text-align: left; cursor: pointer; border-radius: 8px; 
+            font-weight: 600; transition: 0.3s;
+        }
+        .nav-btn.active { background: rgba(34, 211, 238, 0.15); color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); }
+
+        .main-view { flex-grow: 1; padding: 40px; overflow-y: auto; position: relative; z-index: 5; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        /* GLASS CARDS */
+        .card { 
+            background: var(--panel-bg); padding: 25px; border-radius: 16px; 
+            border: 1px solid rgba(255,255,255,0.15); margin-bottom: 25px; 
+            backdrop-filter: blur(12px); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+        .value { font-size: 2.5rem; color: var(--accent-cyan); font-weight: 700; text-shadow: 0 0 10px rgba(34, 211, 238, 0.3); }
+
+        /* CHATBOT UI */
+        .chat-area {
+            height: 180px; background: rgba(0,0,0,0.3); border-radius: 12px;
+            padding: 15px; overflow-y: auto; margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .ai-msg { color: var(--accent-cyan); background: rgba(34, 211, 238, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; border-left: 3px solid var(--accent-cyan); }
+        .user-msg { color: white; margin-bottom: 10px; font-size: 0.95rem; text-align: right; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+        .emergency-btn {
+            width: 100%; padding: 12px; background: var(--alert-red); color: white;
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; letter-spacing: 1px;
+        }
+        .logout-btn {
+            width: 100%; padding: 10px; margin-top: 5px; background: none; 
+            border: 1px solid rgba(239, 68, 68, 0.5); color: var(--alert-red); cursor: pointer; border-radius: 8px; font-weight: bold;
+        }
+    </style>
+</head>
+<body id="main-body">
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h1 style="color: var(--accent-cyan); letter-spacing: 4px; font-size: 2.2rem; margin-bottom: 10px;">ASTROGUARD</h1>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px;">System Access | Try: john / 123</p>
+            <input type="text" id="username" placeholder="Crew ID">
+            <input type="password" id="password" placeholder="Access Key">
+            <button onclick="handleLogin()" style="width:100%; padding:14px; background:var(--accent-cyan); border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:20px; color: #05070a; font-size: 1rem;">AUTHENTICATE</button>
+        </div>
+    </div>
+
+    <div id="app-interface">
+        <aside class="sidebar">
+            <h2 style="color: var(--accent-cyan); margin: 0; font-size: 1.4rem; letter-spacing: 1px;">MISSION CONTROL</h2>
+            <p id="user-display" style="color: white; font-weight: 600; margin: 20px 0 30px 0; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;"></p>
+            
+            <button class="nav-btn active" onclick="showView('vitals', this)">Health Telemetry</button>
+            <button class="nav-btn" onclick="showView('registry', this)">Crew Registry</button>
+            <button class="nav-btn" onclick="showView('logs', this)">Medical Logs</button>
+            
+            <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; text-align: center; border: 1px solid rgba(251, 191, 36, 0.3);">
+                <p style="font-size: 0.8rem; color: var(--relief-gold); margin: 0; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">Stress Relief Protocol</p>
+                <div id="relief-timer" style="font-size: 1.5rem; display: none; margin: 10px 0; font-weight: bold;">15s</div>
+                <button onclick="startRelief()" id="relief-btn" style="width: 100%; margin-top: 15px; padding: 10px; border-radius: 20px; border: none; background: var(--relief-gold); font-weight: bold; cursor: pointer; color: #05070a;">INITIATE AUDIO</button>
+            </div>
+
+            <div style="margin-top: auto;">
+                <button onclick="triggerEmergency()" class="emergency-btn">EMERGENCY</button>
+                <button onclick="location.reload()" class="logout-btn">LOGOUT</button>
+            </div>
+        </aside>
+
+        <main class="main-view">
+            <section id="vitals" class="view-section active">
+                <h1 style="margin-bottom: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Health & AI Support</h1>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px;">
+                    <div class="card"><h3>Heart Rate</h3><div id="hr-val" class="value">--</div><small style="color: var(--text-muted);">BPM (Live)</small></div>
+                    <div class="card"><h3>Oxygen</h3><div class="value">98.5%</div><small style="color: var(--text-muted);">SpO2 (Nominal)</small></div>
+                    <div class="card"><h3>Cognitive State</h3><div class="value" style="font-size: 1.8rem;">Optimal</div><small style="color: var(--text-muted);">AI Assessment</small></div>
+                </div>
+                
+                <div class="card" style="border-color: var(--accent-cyan);">
+                    <h3 style="color: var(--accent-cyan);">AstroGuard Psych-Support AI</h3>
+                    <div id="chat-box" class="chat-area">
+                        <div class="ai-msg"><strong>AstroGuard:</strong> Welcome back. Telemetry is synchronized. I am ready to assist with mission tasks or mental workload.</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="chat-input" placeholder="Type your status..." style="flex:1; padding:14px; border-radius:8px; background:rgba(0,0,0,0.3); color:white; border:1px solid rgba(255,255,255,0.2); outline: none; font-size: 1rem;">
+                        <button onclick="sendChat()" style="padding:0 30px; background:var(--accent-cyan); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:#05070a; font-size: 1rem;">SEND</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="registry" class="view-section">
+                <h1 style="margin-bottom: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Crew Registry</h1>
+                <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px;">
+                    <div class="card">
+                        <h3>Add New Profile</h3>
+                        <input type="text" id="new-name" placeholder="Astronaut Name" style="width:100%; padding:12px; margin:8px 0; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:8px; outline:none;">
+                        <input type="text" id="new-role" placeholder="Mission Role" style="width:100%; padding:12px; margin:8px 0; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:8px; outline:none;">
+                        <button onclick="saveToDatabase()" style="width:100%; margin-top:15px; padding:14px; background:var(--accent-cyan); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:#05070a; font-size: 1rem;">REGISTER CREW</button>
+                    </div>
+                    <div class="card">
+                        <table><thead><tr><th>Name</th><th>Role</th></tr></thead><tbody id="db-table-body"></tbody></table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="logs" class="view-section">
+                <h1 style="margin-bottom: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Medical Event Logs</h1>
+                <div class="card">
+                    <table><thead><tr><th>Timestamp</th><th>Astronaut</th><th>Event Type</th></tr></thead><tbody id="log-table-body"></tbody></table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <audio id="relief-audio" src="music.mp3"></audio>
+
+    <script>
+        let DB = {
+            "john": { name: "John Doe", role: "Commander" },
+            "jane": { name: "Jane Smith", role: "Medical Officer" }
+        };
+        let currentUser = null;
+
+        function handleLogin() {
+            const u = document.getElementById('username').value.toLowerCase();
+            const p = document.getElementById('password').value;
+
+            if(DB[u] && p === "123") {
+                currentUser = DB[u];
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app-interface').style.display = 'flex';
+                document.getElementById('user-display').innerText = currentUser.name + " [" + currentUser.role + "]";
+                
+                renderDBTable();
+                addLog(currentUser.name, "Authentication Successful");
+                
+                setInterval(() => {
+                    document.getElementById('hr-val').innerText = 65 + Math.floor(Math.random() * 8);
+                }, 2500);
+            } else {
+                alert("Access Denied. Please use john/jane and key 123");
+            }
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const box = document.getElementById('chat-box');
+            if(!input.value) return;
+
+            box.innerHTML += `<div class="user-msg"><strong>You:</strong> ${input.value}</div>`;
+            
+            setTimeout(() => {
+                box.innerHTML += `<div class="ai-msg"><strong>AstroGuard:</strong> Input received. Analyzing semantic tone for stress indicators... Current status: Nominal.</div>`;
+                box.scrollTop = box.scrollHeight;
+            }, 800);
+            
+            input.value = "";
+        }
+
+        function showView(id, btn) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function startRelief() {
+            const audio = document.getElementById('relief-audio');
+            const timer = document.getElementById('relief-timer');
+            const btn = document.getElementById('relief-btn');
+            btn.style.display = 'none';
+            timer.style.display = 'block';
+            audio.play().catch(() => alert("Error: music.mp3 not found!"));
+            
+            let time = 15;
+            const clock = setInterval(() => {
+                time--;
+                timer.innerText = time + "s";
+                if(time <= 0) {
+                    clearInterval(clock);
+                    btn.style.display = 'block';
+                    timer.style.display = 'none';
+                    audio.pause();
+                    audio.currentTime = 0;
+                    addLog(currentUser.name, "Stress Relief Protocol Completed");
+                }
+            }, 1000);
+        }
+
+        function saveToDatabase() {
+            const name = document.getElementById('new-name').value;
+            const role = document.getElementById('new-role').value;
+            if(!name || !role) return;
+            DB[name.toLowerCase()] = { name, role };
+            renderDBTable();
+            addLog(currentUser.name, "Added " + name + " to roster");
+            document.getElementById('new-name').value = "";
+            document.getElementById('new-role').value = "";
+        }
+
+        function renderDBTable() {
+            const tbody = document.getElementById('db-table-body');
+            tbody.innerHTML = "";
+            for(let key in DB) {
+                tbody.innerHTML += `<tr><td>${DB[key].name}</td><td>${DB[key].role}</td></tr>`;
+            }
+        }
+
+        function addLog(user, event) {
+            const tbody = document.getElementById('log-table-body');
+            const time = new Date().toLocaleTimeString();
+            tbody.innerHTML = `<tr><td>${time}</td><td>${user}</td><td>${event}</td></tr>` + tbody.innerHTML;
+        }
+
+        function triggerEmergency() {
+            alert("ALERT: Emergency signal sent to Earth Command.");
+            addLog(currentUser.name, "EMERGENCY SIGNAL ACTIVATED");
+        }
+    </script>
+</body>
+</html>
